@@ -48,6 +48,7 @@
     "name": "Tên Loại Món",
     "description": "Mô Tả",
     "noCategories": "Không tìm thấy loại món",
+    "createFromDishHint": "Hãy tạo loại món trước; loại vừa tạo sẽ được chọn cho món ăn này.",
     "confirmDelete": "Bạn có chắc chắn muốn xóa loại món này?",
     "deleteSuccess": "Đã xóa loại món thành công",
     "cannotDelete": "Không thể xóa loại món đang được sử dụng bởi các món ăn",

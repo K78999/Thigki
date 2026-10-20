@@ -26,12 +26,12 @@ import {
   ActivityIndicator,
   Modal,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import { useData } from '../context/DataContext';
+import { showAlert } from '../utils/alertService';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS } from '../theme';
 
 const DishListScreen = ({ navigation }) => {
@@ -367,7 +367,7 @@ const FilterModal = ({ visible, onClose, categories, filters, setFilters, resetF
       hasInvalidPrice ||
       (minPrice && maxPrice && Number(minPrice) > Number(maxPrice))
     ) {
-      Alert.alert(t('common.error'), t('common.invalidPriceRange'));
+      showAlert(t('common.error'), t('common.invalidPriceRange'));
       return;
     }
 

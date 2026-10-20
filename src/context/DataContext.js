@@ -214,7 +214,20 @@ export const DataProvider = ({ children }) => {
       try {
         const result = await api.createCategory(categoryData);
         const categories = await loadDataWithFallback('CATEGORY');
-        dispatch({ type: ActionTypes.SET_CATEGORIES, payload: categories });
+        const categoryId = result && (result.BIT240120_Id || result.id);
+        const updatedCategories =
+          categoryId &&
+          !categories.some(
+            (category) =>
+              (category.BIT240120_Id || category.id) === categoryId
+          )
+            ? [...categories, result]
+            : categories;
+        await storage.saveCategories(updatedCategories);
+        dispatch({
+          type: ActionTypes.SET_CATEGORIES,
+          payload: updatedCategories,
+        });
         return result;
       } catch (error) {
         throw error;
@@ -346,7 +359,14 @@ export const DataProvider = ({ children }) => {
       try {
         const result = await api.createDish(dishData);
         const dishes = await loadDataWithFallback('DISH');
-        dispatch({ type: ActionTypes.SET_DISHES, payload: dishes });
+        const dishId = result && (result.BIT240120_Id || result.id);
+        const updatedDishes =
+          dishId &&
+          !dishes.some((dish) => (dish.BIT240120_Id || dish.id) === dishId)
+            ? [...dishes, result]
+            : dishes;
+        await storage.saveDishes(updatedDishes);
+        dispatch({ type: ActionTypes.SET_DISHES, payload: updatedDishes });
         return result;
       } catch (error) {
         throw error;

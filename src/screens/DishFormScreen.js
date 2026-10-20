@@ -25,7 +25,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
   Switch,
   Image,
   Modal,
@@ -36,13 +35,21 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useData } from '../context/DataContext';
+import { showAlert } from '../utils/alertService';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS } from '../theme';
 
 const DishFormScreen = ({ route, navigation }) => {
   const { dishId } = route.params || {};
   const isEditing = !!dishId;
   const { t } = useTranslation();
-  const { dishes, categories, addDish, editDish, isOnline } = useData();
+  const {
+    dishes,
+    categories,
+    addCategory,
+    addDish,
+    editDish,
+    isOnline,
+  } = useData();
 
   // ========================
   // FORM STATE
@@ -63,6 +70,11 @@ const DishFormScreen = ({ route, navigation }) => {
   const [showImageModal, setShowImageModal] = useState(false);
   const [newImageUrl, setNewImageUrl] = useState('');
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [showCreateCategory, setShowCreateCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryDescription, setNewCategoryDescription] = useState('');
+  const [categoryNameError, setCategoryNameError] = useState('');
+  const [savingCategory, setSavingCategory] = useState(false);
 
   // Load dữ liệu khi edit
   useEffect(() => {
@@ -93,7 +105,7 @@ const DishFormScreen = ({ route, navigation }) => {
         });
       } else {
         // Dish không tồn tại
-        Alert.alert(t('common.error'), t('common.idNotFound'), [
+        showAlert(t('common.error'), t('common.idNotFound'), [
           { text: t('common.ok'), onPress: () => navigation.goBack() },
         ]);
       }
@@ -200,7 +212,7 @@ const DishFormScreen = ({ route, navigation }) => {
 
       if (isEditing) {
         await editDish(dishId, dishData);
-        Alert.alert(
+        showAlert(
           t('common.success'),
           [
             t('dish.updateSuccess'),
@@ -211,7 +223,7 @@ const DishFormScreen = ({ route, navigation }) => {
         );
       } else {
         await addDish(dishData);
-        Alert.alert(
+        showAlert(
           t('common.success'),
           [
             t('dish.createSuccess'),
@@ -224,7 +236,7 @@ const DishFormScreen = ({ route, navigation }) => {
 
       navigation.goBack();
     } catch (error) {
-      Alert.alert(t('common.error'), error.message);
+      showAlert(t('common.error'), error.message);
     } finally {
       setSaving(false);
     }
@@ -237,14 +249,14 @@ const DishFormScreen = ({ route, navigation }) => {
    */
   const handleAddImage = () => {
     if (!newImageUrl.trim()) {
-      Alert.alert(t('common.error'), t('common.invalidUrl'));
+      showAlert(t('common.error'), t('common.invalidUrl'));
       return;
     }
 
     // Validate URL format cơ bản
     const urlPattern = /^https?:\/\/[^\s/$.?#].[^\s]*$/i;
     if (!urlPattern.test(newImageUrl.trim())) {
-      Alert.alert(t('common.error'), t('common.invalidUrl'));
+      showAlert(t('common.error'), t('common.invalidUrl'));
       return;
     }
 
@@ -301,6 +313,36 @@ const DishFormScreen = ({ route, navigation }) => {
         c.id === formData.BIT240120_DishCategoryId
     );
     return cat ? cat.BIT240120_Name : t('common.invalidCategory');
+  };
+
+  const handleCreateCategory = async () => {
+    const name = newCategoryName.trim();
+    if (!name) {
+      setCategoryNameError(t('common.required'));
+      return;
+    }
+
+    setSavingCategory(true);
+    try {
+      const category = await addCategory({
+        BIT240120_Name: name,
+        BIT240120_Description: newCategoryDescription.trim(),
+      });
+      const categoryId = category.BIT240120_Id || category.id;
+      if (!categoryId) {
+        throw new Error(t('common.idNotFound'));
+      }
+
+      updateField('BIT240120_DishCategoryId', categoryId);
+      setNewCategoryName('');
+      setNewCategoryDescription('');
+      setCategoryNameError('');
+      setShowCreateCategory(false);
+    } catch (error) {
+      showAlert(t('common.error'), error.message);
+    } finally {
+      setSavingCategory(false);
+    }
   };
 
   return (
@@ -542,53 +584,142 @@ const DishFormScreen = ({ route, navigation }) => {
 
       {/* Category Picker Modal */}
       <Modal visible={showCategoryPicker} transparent animationType="fade">
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowCategoryPicker(false)}
-        >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setShowCategoryPicker(false)}
+          />
           <View style={styles.pickerModal}>
             <Text style={styles.pickerModalTitle}>{t('dish.category')}</Text>
             {categories.length === 0 ? (
-              <Text style={styles.noCategoriesText}>
-                {t('category.noCategories')}
-              </Text>
-            ) : (
-              categories.map((cat) => (
+              <>
+                <Text style={styles.noCategoriesText}>
+                  {t('category.noCategories')}
+                </Text>
+                <Text style={styles.createCategoryHint}>
+                  {t('category.createFromDishHint')}
+                </Text>
                 <TouchableOpacity
-                  key={cat.BIT240120_Id || cat.id}
-                  style={[
-                    styles.pickerItem,
-                    formData.BIT240120_DishCategoryId ===
-                      (cat.BIT240120_Id || cat.id) && styles.pickerItemActive,
-                  ]}
+                  style={styles.createCategoryButton}
                   onPress={() => {
-                    updateField(
-                      'BIT240120_DishCategoryId',
-                      cat.BIT240120_Id || cat.id
-                    );
                     setShowCategoryPicker(false);
+                    setShowCreateCategory(true);
                   }}
                 >
-                  <Text
-                    style={[
-                      styles.pickerItemText,
-                      formData.BIT240120_DishCategoryId ===
-                        (cat.BIT240120_Id || cat.id) &&
-                        styles.pickerItemTextActive,
-                    ]}
-                  >
-                    {cat.BIT240120_Name}
+                  <Ionicons name="add" size={18} color={COLORS.textOnPrimary} />
+                  <Text style={styles.createCategoryButtonText}>
+                    {t('category.add')}
                   </Text>
-                  {formData.BIT240120_DishCategoryId ===
-                    (cat.BIT240120_Id || cat.id) && (
-                    <Ionicons name="checkmark" size={20} color={COLORS.primary} />
-                  )}
                 </TouchableOpacity>
-              ))
+              </>
+            ) : (
+              <ScrollView>
+                {categories.map((cat) => (
+                  <TouchableOpacity
+                    key={cat.BIT240120_Id || cat.id}
+                    style={[
+                      styles.pickerItem,
+                      formData.BIT240120_DishCategoryId ===
+                        (cat.BIT240120_Id || cat.id) && styles.pickerItemActive,
+                    ]}
+                    onPress={() => {
+                      updateField(
+                        'BIT240120_DishCategoryId',
+                        cat.BIT240120_Id || cat.id
+                      );
+                      setShowCategoryPicker(false);
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.pickerItemText,
+                        formData.BIT240120_DishCategoryId ===
+                          (cat.BIT240120_Id || cat.id) &&
+                          styles.pickerItemTextActive,
+                      ]}
+                    >
+                      {cat.BIT240120_Name}
+                    </Text>
+                    {formData.BIT240120_DishCategoryId ===
+                      (cat.BIT240120_Id || cat.id) && (
+                      <Ionicons
+                        name="checkmark"
+                        size={20}
+                        color={COLORS.primary}
+                      />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             )}
           </View>
-        </TouchableOpacity>
+        </View>
+      </Modal>
+
+      <Modal visible={showCreateCategory} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setShowCreateCategory(false)}
+          />
+          <View style={styles.createCategoryModal}>
+            <Text style={styles.pickerModalTitle}>{t('category.add')}</Text>
+            <TextInput
+              style={[
+                styles.imageModalInput,
+                categoryNameError && styles.inputError,
+              ]}
+              value={newCategoryName}
+              onChangeText={(text) => {
+                setNewCategoryName(text);
+                if (categoryNameError) setCategoryNameError('');
+              }}
+              placeholder={t('category.name')}
+              placeholderTextColor={COLORS.textLight}
+              autoFocus
+            />
+            {categoryNameError ? (
+              <Text style={styles.errorText}>{categoryNameError}</Text>
+            ) : null}
+            <TextInput
+              style={[styles.imageModalInput, styles.textArea]}
+              value={newCategoryDescription}
+              onChangeText={setNewCategoryDescription}
+              placeholder={t('category.description')}
+              placeholderTextColor={COLORS.textLight}
+              multiline
+            />
+            <View style={styles.imageModalActions}>
+              <TouchableOpacity
+                style={styles.imageModalCancel}
+                onPress={() => setShowCreateCategory(false)}
+                disabled={savingCategory}
+              >
+                <Text style={styles.imageModalCancelText}>
+                  {t('common.cancel')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.imageModalAdd,
+                  savingCategory && styles.saveButtonDisabled,
+                ]}
+                onPress={handleCreateCategory}
+                disabled={savingCategory}
+              >
+                {savingCategory ? (
+                  <ActivityIndicator color={COLORS.textOnPrimary} size="small" />
+                ) : (
+                  <Text style={styles.imageModalAddText}>
+                    {t('common.save')}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
 
       {/* Add Image Modal */}
@@ -854,6 +985,32 @@ const styles = StyleSheet.create({
     padding: SPACING.xl,
     width: '80%',
     maxHeight: '60%',
+  },
+  createCategoryModal: {
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.xl,
+    width: '85%',
+  },
+  createCategoryHint: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: SPACING.lg,
+  },
+  createCategoryButton: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    backgroundColor: COLORS.primary,
+    borderRadius: BORDER_RADIUS.md,
+    paddingVertical: SPACING.md,
+  },
+  createCategoryButtonText: {
+    color: COLORS.textOnPrimary,
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontWeight: TYPOGRAPHY.fontWeight.semiBold,
   },
   pickerModalTitle: {
     fontSize: TYPOGRAPHY.fontSize.xl,

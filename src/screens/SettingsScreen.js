@@ -19,12 +19,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useData } from '../context/DataContext';
+import { showAlert } from '../utils/alertService';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS } from '../theme';
 
 const SettingsScreen = () => {
@@ -47,7 +47,7 @@ const SettingsScreen = () => {
    */
   const handleSync = async () => {
     if (!isOnline) {
-      Alert.alert(t('common.warning'), t('common.offline'));
+      showAlert(t('common.warning'), t('common.offline'));
       return;
     }
 
@@ -57,9 +57,9 @@ const SettingsScreen = () => {
       if (!result.success) {
         throw new Error(result.message || t('common.syncFailed'));
       }
-      Alert.alert(t('common.success'), t('common.syncSuccess'));
+      showAlert(t('common.success'), t('common.syncSuccess'));
     } catch (error) {
-      Alert.alert(t('common.error'), error.message);
+      showAlert(t('common.error'), error.message);
     } finally {
       setSyncing(false);
     }

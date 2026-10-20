@@ -48,6 +48,7 @@
     "name": "Category Name",
     "description": "Description",
     "noCategories": "No categories found",
+    "createFromDishHint": "Create a category first, then it will be selected for this dish.",
     "confirmDelete": "Are you sure you want to delete this category?",
     "deleteSuccess": "Category deleted successfully",
     "cannotDelete": "Cannot delete category that is being used by dishes",

@@ -19,7 +19,6 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
-  Alert,
   Modal,
   ActivityIndicator,
   RefreshControl,
@@ -28,6 +27,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import { useData } from '../context/DataContext';
+import { showAlert } from '../utils/alertService';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS } from '../theme';
 
 const CategoryListScreen = ({ navigation }) => {
@@ -125,7 +125,7 @@ const CategoryListScreen = ({ navigation }) => {
           editingCategory.BIT240120_Id || editingCategory.id,
           categoryData
         );
-        Alert.alert(
+        showAlert(
           t('common.success'),
           [
             t('category.saveSuccess'),
@@ -136,7 +136,7 @@ const CategoryListScreen = ({ navigation }) => {
         );
       } else {
         await addCategory(categoryData);
-        Alert.alert(
+        showAlert(
           t('common.success'),
           [
             t('category.saveSuccess'),
@@ -149,7 +149,7 @@ const CategoryListScreen = ({ navigation }) => {
 
       setShowForm(false);
     } catch (error) {
-      Alert.alert(t('common.error'), error.message);
+      showAlert(t('common.error'), error.message);
     } finally {
       setSaving(false);
     }
@@ -165,11 +165,11 @@ const CategoryListScreen = ({ navigation }) => {
 
     if (dishCount > 0) {
       // Không cho xóa - có món ăn đang sử dụng
-      Alert.alert(t('common.warning'), t('category.cannotDelete'));
+      showAlert(t('common.warning'), t('category.cannotDelete'));
       return;
     }
 
-    Alert.alert(
+    showAlert(
       t('category.delete'),
       t('category.confirmDelete'),
       [
@@ -180,12 +180,12 @@ const CategoryListScreen = ({ navigation }) => {
           onPress: async () => {
             try {
               await removeCategory(categoryId);
-              Alert.alert(t('common.success'), t('category.deleteSuccess'));
+              showAlert(t('common.success'), t('category.deleteSuccess'));
             } catch (error) {
               if (error.message === 'CATEGORY_IN_USE') {
-                Alert.alert(t('common.warning'), t('category.cannotDelete'));
+                showAlert(t('common.warning'), t('category.cannotDelete'));
               } else {
-                Alert.alert(t('common.error'), error.message);
+                showAlert(t('common.error'), error.message);
               }
             }
           },

@@ -18,7 +18,6 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
   FlatList,
   Dimensions,
@@ -26,6 +25,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useData } from '../context/DataContext';
+import { showAlert } from '../utils/alertService';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS } from '../theme';
 
 const { width } = Dimensions.get('window');
@@ -77,7 +77,7 @@ const DishDetailScreen = ({ route, navigation }) => {
    * Hiển thị dialog xác nhận trước khi xóa
    */
   const handleDelete = () => {
-    Alert.alert(
+    showAlert(
       t('dish.delete'),
       t('dish.confirmDelete'),
       [
@@ -89,10 +89,10 @@ const DishDetailScreen = ({ route, navigation }) => {
             try {
               setDeleting(true);
               await removeDish(dishId);
-              Alert.alert(t('common.success'), t('dish.deleteSuccess'));
+              showAlert(t('common.success'), t('dish.deleteSuccess'));
               navigation.goBack();
             } catch (error) {
-              Alert.alert(t('common.error'), error.message);
+              showAlert(t('common.error'), error.message);
             } finally {
               setDeleting(false);
             }
