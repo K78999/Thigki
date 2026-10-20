@@ -724,11 +724,12 @@ const DishFormScreen = ({ route, navigation }) => {
 
       {/* Add Image Modal */}
       <Modal visible={showImageModal} transparent animationType="fade">
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowImageModal(false)}
-        >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setShowImageModal(false)}
+          />
           <View style={styles.imageModal}>
             <Text style={styles.imageModalTitle}>{t('dish.addImage')}</Text>
             <TextInput
@@ -762,7 +763,7 @@ const DishFormScreen = ({ route, navigation }) => {
               </TouchableOpacity>
             </View>
           </View>
-        </TouchableOpacity>
+        </View>
       </Modal>
     </KeyboardAvoidingView>
   );

@@ -20,6 +20,7 @@ import {
   TextInput,
   StyleSheet,
   Modal,
+  Image,
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
@@ -51,6 +52,16 @@ const CategoryListScreen = ({ navigation }) => {
   const [formErrors, setFormErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const selectedCategoryId =
+    selectedCategory?.BIT240120_Id || selectedCategory?.id;
+  const selectedCategoryDishes = selectedCategoryId
+    ? dishes.filter(
+        (dish) =>
+          String(dish.BIT240120_DishCategoryId) ===
+          String(selectedCategoryId)
+      )
+    : [];
 
   useFocusEffect(
     useCallback(() => {
@@ -203,23 +214,36 @@ const CategoryListScreen = ({ navigation }) => {
 
     return (
       <View style={styles.categoryCard}>
-        <View style={styles.categoryIcon}>
-          <Ionicons name="restaurant" size={24} color={COLORS.primary} />
-        </View>
-        <View style={styles.categoryInfo}>
-          <Text style={styles.categoryName}>{item.BIT240120_Name}</Text>
-          {item.BIT240120_Description ? (
-            <Text style={styles.categoryDescription} numberOfLines={2}>
-              {item.BIT240120_Description}
-            </Text>
-          ) : null}
-          <View style={styles.dishCountBadge}>
-            <Ionicons name="fast-food-outline" size={12} color={COLORS.textSecondary} />
-            <Text style={styles.dishCountText}>
-              {dishCount} {t('tabs.dishes').toLowerCase()}
-            </Text>
+        <TouchableOpacity
+          style={styles.categoryMain}
+          onPress={() => setSelectedCategory(item)}
+          accessibilityRole="button"
+          accessibilityLabel={`${item.BIT240120_Name}, ${dishCount} ${t('tabs.dishes').toLowerCase()}`}
+          accessibilityHint={t('category.viewDishes')}
+        >
+          <View style={styles.categoryIcon}>
+            <Ionicons name="restaurant" size={24} color={COLORS.primary} />
           </View>
-        </View>
+          <View style={styles.categoryInfo}>
+            <Text style={styles.categoryName}>{item.BIT240120_Name}</Text>
+            {item.BIT240120_Description ? (
+              <Text style={styles.categoryDescription} numberOfLines={2}>
+                {item.BIT240120_Description}
+              </Text>
+            ) : null}
+            <View style={styles.dishCountBadge}>
+              <Ionicons name="fast-food-outline" size={12} color={COLORS.textSecondary} />
+              <Text style={styles.dishCountText}>
+                {dishCount} {t('tabs.dishes').toLowerCase()}
+              </Text>
+            </View>
+          </View>
+          <Ionicons
+            name="chevron-forward"
+            size={18}
+            color={COLORS.textLight}
+          />
+        </TouchableOpacity>
         <View style={styles.categoryActions}>
           <TouchableOpacity
             style={styles.actionButton}
@@ -228,14 +252,20 @@ const CategoryListScreen = ({ navigation }) => {
             <Ionicons name="create-outline" size={20} color={COLORS.info} />
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.actionButton}
+            style={[
+              styles.actionButton,
+              dishCount > 0 && styles.deleteActionButton,
+            ]}
             onPress={() => handleDelete(item)}
+            accessibilityRole="button"
+            accessibilityLabel={t('category.delete')}
+            accessibilityHint={
+              dishCount > 0
+                ? t('category.cannotDelete')
+                : t('category.confirmDelete')
+            }
           >
-            <Ionicons
-              name="trash-outline"
-              size={20}
-              color={dishCount > 0 ? COLORS.textLight : COLORS.error}
-            />
+            <Ionicons name="trash-outline" size={20} color={COLORS.error} />
           </TouchableOpacity>
         </View>
       </View>
@@ -303,13 +333,21 @@ const CategoryListScreen = ({ navigation }) => {
       )}
 
       {/* Add/Edit Modal */}
-      <Modal visible={showForm} transparent animationType="fade">
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowForm(false)}
-        >
-          <View style={styles.formModal} onStartShouldSetResponder={() => true}>
+      <Modal
+        visible={showForm}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowForm(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setShowForm(false)}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.cancel')}
+          />
+          <View style={styles.formModal}>
             <Text style={styles.formTitle}>
               {editingCategory ? t('category.edit') : t('category.add')}
             </Text>
@@ -363,7 +401,113 @@ const CategoryListScreen = ({ navigation }) => {
               </TouchableOpacity>
             </View>
           </View>
-        </TouchableOpacity>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={selectedCategory !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedCategory(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setSelectedCategory(null)}
+          />
+          <View style={styles.categoryDetailModal}>
+            <View style={styles.categoryDetailHeader}>
+              <View style={styles.categoryDetailTitleContainer}>
+                <Text style={styles.formTitle}>
+                  {selectedCategory?.BIT240120_Name}
+                </Text>
+                {selectedCategory?.BIT240120_Description ? (
+                  <Text style={styles.categoryDescription}>
+                    {selectedCategory.BIT240120_Description}
+                  </Text>
+                ) : null}
+              </View>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => setSelectedCategory(null)}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close')}
+              >
+                <Ionicons name="close" size={20} color={COLORS.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.categoryDishSectionTitle}>
+              {t('category.dishes')}
+            </Text>
+            <FlatList
+              data={selectedCategoryDishes}
+              keyExtractor={(dish, index) =>
+                String(dish.BIT240120_Id || dish.id || index)
+              }
+              ListEmptyComponent={
+                <Text style={styles.noCategoryDishes}>
+                  {t('dish.noDishes')}
+                </Text>
+              }
+              renderItem={({ item: dish }) => {
+                const images = Array.isArray(dish.BIT240120_DishImage)
+                  ? dish.BIT240120_DishImage
+                  : [];
+                const image =
+                  images.find((entry) => entry.BIT240120_IsThumbnail) ||
+                  images[0];
+
+                return (
+                  <TouchableOpacity
+                    style={styles.categoryDishRow}
+                    onPress={() => {
+                      setSelectedCategory(null);
+                      navigation.navigate('DishDetail', {
+                        dishId: dish.BIT240120_Id || dish.id,
+                      });
+                    }}
+                  >
+                    {image?.BIT240120_ImageUrl ? (
+                      <Image
+                        source={{ uri: image.BIT240120_ImageUrl }}
+                        style={styles.categoryDishImage}
+                      />
+                    ) : (
+                      <View
+                        style={[
+                          styles.categoryDishImage,
+                          styles.categoryDishImagePlaceholder,
+                        ]}
+                      >
+                        <Ionicons
+                          name="restaurant-outline"
+                          size={22}
+                          color={COLORS.textLight}
+                        />
+                      </View>
+                    )}
+                    <View style={styles.categoryDishInfo}>
+                      <Text style={styles.categoryDishName} numberOfLines={1}>
+                        {dish.BIT240120_Name}
+                      </Text>
+                      <Text style={styles.categoryDishPrice}>
+                        ${Number(dish.BIT240120_Price || 0).toFixed(2)}
+                      </Text>
+                    </View>
+                    <Ionicons
+                      name="chevron-forward"
+                      size={18}
+                      color={COLORS.textLight}
+                    />
+                  </TouchableOpacity>
+                );
+              }}
+              style={styles.categoryDishList}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
+        </View>
       </Modal>
     </View>
   );
@@ -456,6 +600,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: SPACING.md,
   },
+  categoryMain: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 0,
+  },
   categoryInfo: {
     flex: 1,
   },
@@ -491,6 +641,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  deleteActionButton: {
+    backgroundColor: COLORS.errorLight,
+  },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -514,6 +667,69 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.xxl,
     width: '85%',
+  },
+  categoryDetailModal: {
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.xxl,
+    width: '85%',
+    maxHeight: '80%',
+  },
+  categoryDetailHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: SPACING.md,
+  },
+  categoryDetailTitleContainer: {
+    flex: 1,
+  },
+  categoryDishSectionTitle: {
+    color: COLORS.textSecondary,
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.semiBold,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+  },
+  categoryDishList: {
+    flexGrow: 0,
+  },
+  noCategoryDishes: {
+    color: COLORS.textSecondary,
+    fontSize: TYPOGRAPHY.fontSize.md,
+    paddingVertical: SPACING.xl,
+    textAlign: 'center',
+  },
+  categoryDishRow: {
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    flexDirection: 'row',
+    gap: SPACING.md,
+    paddingVertical: SPACING.md,
+  },
+  categoryDishImage: {
+    width: 52,
+    height: 52,
+    borderRadius: BORDER_RADIUS.md,
+  },
+  categoryDishImagePlaceholder: {
+    alignItems: 'center',
+    backgroundColor: COLORS.surfaceVariant,
+    justifyContent: 'center',
+  },
+  categoryDishInfo: {
+    flex: 1,
+  },
+  categoryDishName: {
+    color: COLORS.textPrimary,
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontWeight: TYPOGRAPHY.fontWeight.semiBold,
+  },
+  categoryDishPrice: {
+    color: COLORS.primary,
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    marginTop: SPACING.xs,
   },
   formTitle: {
     fontSize: TYPOGRAPHY.fontSize.xxl,

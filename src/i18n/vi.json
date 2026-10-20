@@ -48,7 +48,9 @@
     "name": "Tên Loại Món",
     "description": "Mô Tả",
     "noCategories": "Không tìm thấy loại món",
+    "dishes": "Món ăn thuộc loại này",
     "createFromDishHint": "Hãy tạo loại món trước; loại vừa tạo sẽ được chọn cho món ăn này.",
+    "viewDishes": "Xem các món thuộc loại này",
     "confirmDelete": "Bạn có chắc chắn muốn xóa loại món này?",
     "deleteSuccess": "Đã xóa loại món thành công",
     "cannotDelete": "Không thể xóa loại món đang được sử dụng bởi các món ăn",
@@ -77,6 +79,7 @@
   "common": {
     "save": "Lưu",
     "cancel": "Hủy",
+    "close": "Đóng",
     "delete": "Xóa",
     "edit": "Sửa",
     "confirm": "Xác Nhận",
