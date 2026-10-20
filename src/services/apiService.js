@@ -40,6 +40,45 @@ const fetchWithTimeout = async (url, options = {}) => {
   }
 };
 
+const parseResponse = async (response) => {
+  if (response.status === 204) return null;
+
+  const body = await response.text();
+  if (!body) return null;
+
+  try {
+    return JSON.parse(body);
+  } catch {
+    throw new Error('MockAPI returned an invalid JSON response');
+  }
+};
+
+const normalizeRecord = (record) => {
+  if (record === null || record === undefined) return record;
+  if (typeof record !== 'object') {
+    throw new Error('MockAPI returned an invalid record');
+  }
+
+  const recordId = record.BIT240120_Id || record.id;
+  if (!recordId) {
+    throw new Error('MockAPI record is missing its ID');
+  }
+
+  const fields = { ...record };
+  delete fields.id;
+  return {
+    ...fields,
+    BIT240120_Id: recordId,
+  };
+};
+
+const normalizeList = (records) => {
+  if (!Array.isArray(records)) {
+    throw new Error('MockAPI returned an invalid list response');
+  }
+  return records.map(normalizeRecord);
+};
+
 // ========================
 // DISH CATEGORY API
 // Bảng: BIT240120_DishCategory
@@ -53,7 +92,7 @@ export const fetchCategories = async () => {
   const response = await fetchWithTimeout(
     `${MOCKAPI_BASE_URL}${ENDPOINTS.CATEGORIES}`
   );
-  return response.json();
+  return normalizeList(await parseResponse(response));
 };
 
 /**
@@ -63,9 +102,9 @@ export const fetchCategories = async () => {
  */
 export const fetchCategoryById = async (id) => {
   const response = await fetchWithTimeout(
-    `${MOCKAPI_BASE_URL}${ENDPOINTS.CATEGORIES}/${id}`
+    `${MOCKAPI_BASE_URL}${ENDPOINTS.CATEGORIES}/${encodeURIComponent(id)}`
   );
-  return response.json();
+  return normalizeRecord(await parseResponse(response));
 };
 
 /**
@@ -82,7 +121,7 @@ export const createCategory = async (category) => {
       body: JSON.stringify(category),
     }
   );
-  return response.json();
+  return normalizeRecord(await parseResponse(response));
 };
 
 /**
@@ -93,14 +132,14 @@ export const createCategory = async (category) => {
  */
 export const updateCategory = async (id, category) => {
   const response = await fetchWithTimeout(
-    `${MOCKAPI_BASE_URL}${ENDPOINTS.CATEGORIES}/${id}`,
+    `${MOCKAPI_BASE_URL}${ENDPOINTS.CATEGORIES}/${encodeURIComponent(id)}`,
     {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(category),
     }
   );
-  return response.json();
+  return normalizeRecord(await parseResponse(response));
 };
 
 /**
@@ -110,12 +149,12 @@ export const updateCategory = async (id, category) => {
  */
 export const deleteCategory = async (id) => {
   const response = await fetchWithTimeout(
-    `${MOCKAPI_BASE_URL}${ENDPOINTS.CATEGORIES}/${id}`,
+    `${MOCKAPI_BASE_URL}${ENDPOINTS.CATEGORIES}/${encodeURIComponent(id)}`,
     {
       method: 'DELETE',
     }
   );
-  return response.json();
+  return parseResponse(response);
 };
 
 // ========================
@@ -131,7 +170,7 @@ export const fetchDishes = async () => {
   const response = await fetchWithTimeout(
     `${MOCKAPI_BASE_URL}${ENDPOINTS.DISHES}`
   );
-  return response.json();
+  return normalizeList(await parseResponse(response));
 };
 
 /**
@@ -141,9 +180,9 @@ export const fetchDishes = async () => {
  */
 export const fetchDishById = async (id) => {
   const response = await fetchWithTimeout(
-    `${MOCKAPI_BASE_URL}${ENDPOINTS.DISHES}/${id}`
+    `${MOCKAPI_BASE_URL}${ENDPOINTS.DISHES}/${encodeURIComponent(id)}`
   );
-  return response.json();
+  return normalizeRecord(await parseResponse(response));
 };
 
 /**
@@ -160,7 +199,7 @@ export const createDish = async (dish) => {
       body: JSON.stringify(dish),
     }
   );
-  return response.json();
+  return normalizeRecord(await parseResponse(response));
 };
 
 /**
@@ -171,14 +210,14 @@ export const createDish = async (dish) => {
  */
 export const updateDish = async (id, dish) => {
   const response = await fetchWithTimeout(
-    `${MOCKAPI_BASE_URL}${ENDPOINTS.DISHES}/${id}`,
+    `${MOCKAPI_BASE_URL}${ENDPOINTS.DISHES}/${encodeURIComponent(id)}`,
     {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(dish),
     }
   );
-  return response.json();
+  return normalizeRecord(await parseResponse(response));
 };
 
 /**
@@ -188,10 +227,10 @@ export const updateDish = async (id, dish) => {
  */
 export const deleteDish = async (id) => {
   const response = await fetchWithTimeout(
-    `${MOCKAPI_BASE_URL}${ENDPOINTS.DISHES}/${id}`,
+    `${MOCKAPI_BASE_URL}${ENDPOINTS.DISHES}/${encodeURIComponent(id)}`,
     {
       method: 'DELETE',
     }
   );
-  return response.json();
+  return parseResponse(response);
 };

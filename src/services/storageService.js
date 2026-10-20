@@ -50,7 +50,7 @@ export const loadData = async (key) => {
     return jsonData ? JSON.parse(jsonData) : null;
   } catch (error) {
     console.error(`Error loading data for key ${key}:`, error);
-    return null;
+    throw error;
   }
 };
 
@@ -63,6 +63,7 @@ export const removeData = async (key) => {
     await AsyncStorage.removeItem(key);
   } catch (error) {
     console.error(`Error removing data for key ${key}:`, error);
+    throw error;
   }
 };
 
